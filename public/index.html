@@ -157,6 +157,114 @@
 </head>
 <body>
 
+    <div class="card">
+        <div class="header">
+            <h2><i class="fa-solid fa-cloud-sun"></i> MapTiler Geolocation</h2>
+            <h4>Nama : Muhammad Choirul Rizal</h4>
+            <h4>NIM : 20240140213</h4>
+        </div>
+
+        <div class="search-box">
+            <input type="text" id="inputLokasi" placeholder="Masukkan lokasi (contoh: Yogyakarta)...">
+            <button id="btnCari"><i class="fa-solid fa-search"></i> Cari</button>
+        </div>
+
+        <div id="loading" class="hidden">
+            <i class="fa-solid fa-spinner fa-spin"></i> 
+        </div>
+
+        <div id="errorBox" class="error hidden"></div>
+
+        <div id="resultContainer" class="result-box">
+            <div class="item">
+                <span class="label"><i class="fa-solid fa-location-dot"></i> Lokasi</span>
+                <span class="value" id="lokasi">Memuat...</span>
+            </div>
+            <div class="item">
+                <span class="label"><i class="fa-solid fa-flag"></i> Negara</span>
+                <span class="value" id="negara">Memuat...</span>
+            </div>
+            <div class="item">
+                <span class="label"><i class="fa-solid fa-map"></i> Provinsi</span>
+                <span class="value" id="provinsi">Memuat...</span>
+            </div>
+            <div class="item">
+                <span class="label"><i class="fa-solid fa-city"></i> Kecamatan / Kota</span>
+                <span class="value" id="kecamatan">Memuat...</span>
+            </div>
+            <div class="grid-2">
+                <div class="item">
+                    <span class="label"><i class="fa-solid fa-compass"></i> Longitude</span>
+                    <span class="value" id="longitude">Memuat...</span>
+                </div>
+                <div class="item">
+                    <span class="label"><i class="fa-solid fa-compass"></i> Latitude</span>
+                    <span class="value" id="latitude">Memuat...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const btnCari = document.getElementById("btnCari");
+        const inputLokasi = document.getElementById("inputLokasi");
+        const loadingDiv = document.getElementById("loading");
+        const errorBox = document.getElementById("errorBox");
+
+        function getLokasiData(query = "") {
+            loadingDiv.classList.remove("hidden");
+            errorBox.classList.add("hidden");
+
+            const url = query ? `/api/lokasi?q=${encodeURIComponent(query)}` : "/api/lokasi";
+
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) throw new Error("Gagal mengambil data dari server");
+                    return response.json();
+                })
+                .then(data => {
+                    console.log("Data API:", data);
+
+                    document.getElementById("lokasi").textContent = data.lokasi || data.kota || "-";
+                    document.getElementById("negara").textContent = data.negara || "-";
+                    document.getElementById("provinsi").textContent = data.provinsi || "-";
+                    document.getElementById("kecamatan").textContent = data.kecamatan || "-";
+
+                    if (typeof data.longitude !== "undefined") {
+                        document.getElementById("longitude").textContent = Number(data.longitude).toFixed(4);
+                        document.getElementById("latitude").textContent = Number(data.latitude).toFixed(4);
+                    } else if (Array.isArray(data.koordinat)) {
+                        document.getElementById("longitude").textContent = data.koordinat[0];
+                        document.getElementById("latitude").textContent = data.koordinat[1];
+                    } else {
+                        document.getElementById("longitude").textContent = "-";
+                        document.getElementById("latitude").textContent = "-";
+                    }
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    errorBox.textContent = "Gagal mengambil data dari MapTiler API.";
+                    errorBox.classList.remove("hidden");
+                })
+                .finally(() => {
+                    loadingDiv.classList.add("hidden");
+                });
+        }
+
+        // Fetch otomatis saat pertama kali dibuka (Default: Bandung City)
+        getLokasiData();
+
+        // Event listener saat tombol cari diklik
+        btnCari.addEventListener("click", () => {
+            const query = inputLokasi.value.trim();
+            if (query) getLokasiData(query);
+        });
+
+        // Event listener saat menekan tombol Enter
+        inputLokasi.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") btnCari.click();
+        });
+    </script>
     
 </body>
 </html>
